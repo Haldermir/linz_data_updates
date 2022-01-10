@@ -1,0 +1,144 @@
+#######################################
+Log file for 09-01-2022
+#######################################
+
+
+
+
+aims.address_class
+No data
+
+
+aims.address_component
+No data
+
+
+aims.address_component_type
+No data
+
+
+aims.address_lifecycle_stage
+No data
+
+
+aims.address_position
+No data
+
+
+aims.address_position_type
+No data
+
+
+aims.address_reference
+No data
+
+
+aims.address_reference_object_type
+No data
+
+
+aims.addressable_object_external
+
+
+aims.addressable_object_lifecycle_stage
+No data
+
+
+aims.addressable_object_type
+No data
+
+
+aims.alternative_address_type
+No data
+
+
+aims.organisation
+No data
+
+
+linz.fire_and_emergency_localities
+No data
+
+
+linz.titles_with_owners
+
+
+linz.parcel_statutory_actions
+
+
+linz.title_parcel_association
+
+
+linz.parcels
+
+
+nz_roads.address_range_road_type
+No data
+
+
+nz_roads.addressing_road_name
+No data
+
+
+nz_roads.capture_method
+No data
+
+
+nz_roads.geometry_class
+No data
+
+
+nz_roads.organisation
+No data
+
+
+nz_roads.road
+No data
+
+
+nz_roads.road_name
+No data
+
+
+nz_roads.road_name_association
+No data
+
+
+nz_roads.road_name_class
+No data
+
+
+nz_roads.road_name_prefix
+No data
+
+
+nz_roads.road_name_suffix
+No data
+
+
+nz_roads.road_name_type
+No data
+
+
+nz_roads.road_section
+No data
+
+
+nz_roads.road_section_geometry
+No data
+
+
+nz_roads.road_section_lifecycle_stage
+No data
+
+
+nz_roads.road_section_type
+No data
+
+
+nz_roads.road_type
+No data
+
+
+nz_roads.route_name
+No data
