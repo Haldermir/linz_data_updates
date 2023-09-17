@@ -1,213 +1,183 @@
-#!/usr/bin/env python
-# coding: utf-8
+# Process Name: Update LINZ Datasets
+# Author: Gareth Palmer
+#
+# Description:
+# Download and process LINZ updates
 
-# # Download updates from LINZ
-# 
-# Creating a script that would download the updates from the LINZ data portal on a regular basis using the LINZ Changeset API. Most changes come through in frequently so needed to create a script that would only load the changes if any were found. 
-# 
-# The list of datasets that need to be checked are contained in a spreadsheet in the same directory as the initial downloads. New datasets and updates are able to be added to this spreadsheet moving forward.
-
-import requests
 import pandas as pd
+import geopandas as gpd
 import psycopg2 as pg
-import postgis
 from sqlalchemy import create_engine
-from owslib.wfs import WebFeatureService
+import postgis
+from owslib.wfs import WebFeatureService as wfs
 import xml.etree.ElementTree as et
 import codecs
-import datetime as dt
+from datetime import datetime as dt
 from pyproj import Transformer
-import re
+import requests
 
-today = dt.datetime.now()
-to_date = today.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+# Classes
 
-week = dt.timedelta(weeks=1)
-then = today - week
-from_date = then.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+class datasetUpdate:
+    def create_metadata_conn(self):
+        self.mtdt_pg = pg.connect(
+            dbname = 'metadata'
+            ,user = 'postgres'
+            ,password = 'votum123'
+            ,host = 'thoth'
+            ,port = 5432
+        )
 
-transformer = Transformer.from_crs(4167, 2193)
+    def create_transformer(self):
+        self.transformer = Transformer.from_crs(
+            4167
+            ,2193
+        )
 
-# Setting up logfile for process
+    def __init__(self, dataset):
+        self.create_metadata_conn()
+        self.create_transformer()
 
-log = r"G:\GIS DataBase\Updates\update_log.txt"
+        self.dataset = dataset
+        self.dataset_id = self.dataset.dataset_id
+        self.item_no = self.dataset.item_no
+        self.src_name = self.dataset.source_name
+        self.src_id = self.dataset.source_id
+        self.db_name = self.dataset.db_name
+        self.dataset_type = self.dataset.relation_type
+        self.geometry = None
+        self.to_date = dt.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        self.from_date = '2000-01-01T00:00:00.000Z'
 
-with open(log, 'w') as log_writer:
-    log_writer.write('#######################################\n')
-    log_date = today.strftime('%d-%m-%Y')
-    log_writer.write(f'Log file for {log_date}\n')
-    log_writer.write('#######################################\n')
-    log_writer.write('\n\n')
+        self.get_last_update()
+        self.get_api()
 
-def log_write(message):
-    with open(log, 'a') as log_writer:
-        log_writer.write(f'{message}\n')
+        self.download_updates()
 
-def check_numeric(val):
-    if pd.isnull(val) or type(val) is int:
-        return val
-    elif re.match(r'^\d*-\d\d-\d\d', val):
-        if re.match(r'^\d*-\d\d-\d\dZ', val):
-            val = val[:-1] + 'T00:00:00.000000Z'
-        return pd.to_datetime(val, yearfirst=True, infer_datetime_format=True)
-    test_val = val.replace('.', '').replace('-','')
-    if test_val.isnumeric():
-        if float(val) % 1 == 0:
-            return int(float(val))
-        else:
-            return float(val)
-    else:
-        return val
+    def get_api(self):
+        '''
+        Collects API key needed to access source
+        '''
+        with self.mtdt_pg.cursor() as conn:
+            conn.execute(f'select api_key from public.api_keys where source_id = {self.src_id}')
+            self.api_key = conn.fetchone()[0]
 
-def get_shape(subset):
-    for child in subset[-1]:
-        geometry = child.tag[32:]
-        if geometry == 'Point' and child[0] is not None:
-            posList = child[0].text
-            vertexes = []
-            for ind, coord in enumerate(posList.split()):
-                coord = float(coord)
-                if ind % 2 == 0:
-                    vertex = [coord]
-                else:
-                    vertex.append(coord)
-                    if coord < 1000:
-                        vertex[1], vertex[0] = transformer.transform(vertex[0], vertex[1])
-                    vertex = [str(vert) for vert in vertex]
-                    vertexes.append(' '.join(vertex))
-            vertex_string = ', '.join(vertexes)
-            return geometry, f'{geometry} ({vertex_string})'
-        else:
-            break
-    for child in subset[-1][0][0]:
-        geometry = child.tag[32:]
-        if geometry == 'Polygon' and child[0][0][0] is not None:
-            posList = child[0][0][0].text
-            vertexes = []
-            for ind, coord in enumerate(posList.split()):
-                coord = float(coord)
-                if ind % 2 == 0:
-                    vertex = [coord]
-                else:
-                    vertex.append(coord)
-                    if coord < 1000:
-                        vertex[1], vertex[0] = transformer.transform(vertex[0], vertex[1])
-                    vertex = [str(vert) for vert in vertex]
-                    vertexes.append(' '.join(vertex))
-            vertex_string = ', '.join(vertexes)
-        
-        elif geometry == 'LineString' and child[0] is not None:
-            geometry = 'MultiLineString'
-            for subchild in child:
+        # Check for date of last update
+    def get_last_update(self):
+        '''
+        Gets date of last update. Leaves date as 2000 if no values exist.
+        '''
+        update_query = f'select max(start_time) from public.dataset_updates where success = True and dataset_id = {self.dataset_id}'
+
+        with self.mtdt_pg.cursor() as conn:
+            conn.execute(update_query)
+            if conn.rowcount == 1:
+                self.from_date == conn.fetchone()[0].strftime('%Y-%m-%dT%H:%M:%S.%fZ')                
+
+    # Download updates from source
+    def download_updates(self):
+        '''
+        Downloads the data needed to perform the update
+        '''
+        url = ''.join([
+            'https://data.linz.govt.nz/services;key='
+            ,self.api_key
+            ,r'/wfs/'
+            ,self.dataset_type
+            ,'-'
+            ,str(int(self.item_no))
+            ,'-changeset?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&typeNames='
+            ,self.dataset_type
+            ,'-'
+            ,str(int(self.item_no))
+            ,'-changeset&viewparams=from:'
+            ,self.from_date
+            ,';to:'
+            ,self.to_date
+            ,'&outputFormat=json'
+            ])
+        self.re = requests.get(url)
+        self.data = self.re.text
+
+
+    # Process wfs into useable dataset
+    def get_shape(self, subset):
+        for child in subset[-1]:
+            self.geometry = child.tag[32:]
+            if self.geometry == 'Point' and child[0] is not None:
                 posList = child[0].text
-                vertexes = []
-                for ind, coord in enumerate(posList.split()):
-                    coord = float(coord)
-                    if ind % 2 == 0:
-                        vertex = [coord]
-                    else:
-                        vertex.append(coord)
-                        if coord < 1000:
-                            vertex[1], vertex[0] = transformer.transform(vertex[0], vertex[1])
-                        vertex = [str(vert) for vert in vertex]
-                        vertexes.append(' '.join(vertex))
-                vertex_string = ', '.join(vertexes)
-        return geometry, f'{geometry} (({vertex_string}))'
+                vertex_string = self.reproject_coord(posList)
+                return self.geometry, f'{self.geometry} ({vertex_string})'
+            else:
+                break
+        for child in subset[-1][0][0]:
+            self.geometry = child.tag[32:]
+            if self.geometry == 'Polygon' and child[0][0][0] is not None:
+                posList = child[0][0][0].text
+                vertex_string = self.reproject_coord(posList)
+            
+            elif self.geometry == 'LineString' and child[0] is not None:
+                self.geometry = 'MultiLineString'
+                for subchild in child:
+                    posList = child[0].text
+                    vertex_string = self.reproject_coord(posList)
+            
+        return self.geometry, f'{self.geometry} (({vertex_string}))'
 
-def get_updates(layer_id, table_type, api_key, from_date=from_date, to_date=to_date):
-    url = f'https://data.linz.govt.nz/services;key={api_key}/wfs/{table_type}-{layer_id}-changeset?SERVICE=WFS&REQUEST=GetFeature&viewparams=from:{from_date};to:{to_date}&TYPENAMES=data.linz.govt.nz%3A{table_type}-{layer_id}-changeset&NAMESPACES=xmlns%28data.linz.govt.nz%2Chttp%3A%2F%2Fdata.linz.govt.nz%29&OUTPUTFORMAT=application%2Fgml%2Bxml%3B%20version%3D3.2'
-    re = requests.get(url)
-    return re.status_code, re.text
+    ## Possibly use a geopandas gdf to eliminate need to run * lines
 
-def main(test_update, dataset, id_val):
-    log_write('\n')
-    log_write(dataset)
-    with codecs.open(r"G:\GIS DataBase\Updates\update_data.txt", "w", "utf-8") as writer:
-        writer.writelines(test_update)
-
-    tree = et.fromstring(test_update)
-    geometry = None
-    data = {}
-
-    for i, child in enumerate(tree):
-        for subset in child:
-            data[i] = {subchild.tag[26:]:subchild.text for subchild in subset}
-            new_cols = [subchild.tag[26:] for subchild in subset]
-            if 'shape' in new_cols:
-                geometry, data[i]['shape'] = get_shape(subset)
-
-    # Checking that the data frame has values present to allow uploads
-    if len(data) > 0:
-        try:
-            df = pd.DataFrame.from_dict(data,orient='index')
-            for column in list(df.columns):
-                df[column] = df.apply(lambda row: check_numeric(row[column]), axis=1)
-            df.convert_dtypes()
-            df.to_sql('data_updates', engine, 'updates', if_exists='replace', index=False)
-        except Exception as e:
-            log_write('Failed to upload')
-            log_write(e)
-            return
-    else:
-        log_write('No data')
-    
-    if geometry:
-        with psy_con.cursor() as conn:
-            try:
-                conn.execute(f"alter table updates.data_updates add column geom Geometry('{geometry}', 2193);")
-                conn.execute("update updates.data_updates set geom = ST_GeomFromText(shape, 2193);")
-                psy_con.commit()
-            except Exception as e:
-                log_write('Table not able to update')
-                log_write(e)
-                psy_con.rollback()
+    #* Reproject data into NZTM from NZGD2000
+    def reproject_coord(self, posList):
+        vertexes = []
+        for ind, coord in enumerate(posList.split()):
+            coord = float(coord)
+            if ind % 2 == 0:
+                vertex = [coord]
+            else:
+                vertex.append(coord)
+                if coord < 1000:
+                    vertex[1], vertex[0] = self.transformer.transform(vertex[0], vertex[1])
+                vertex = [str(vert) for vert in vertex]
+                vertexes.append(' '.join(vertex))
+        return ', '.join(vertexes)
         
-    if len(data) > 0:
-        fields = list(df.columns)
-        if '__change__' in fields:
-            fields.remove('__change__')
-        if 'shape' in fields:
-            fields.remove('shape')
-        
-        field_list = ','.join(fields).lower()
-        
-        with  psy_con.cursor() as conn:
-            try:
-                conn.execute(f"delete from {dataset} where {id_val} in (select {id_val} from updates.data_updates)")
-                if 'shape' in list(df.columns):
-                    if geometry == 'Polygon':
-                        conn.execute(f"insert into {dataset} (geom, {field_list}) select ST_Multi(geom), {field_list} from updates.data_updates where __change__ != 'DELETE'")
-                    else:
-                        conn.execute(f"insert into {dataset} (geom, {field_list}) select geom, {field_list} from updates.data_updates where __change__ != 'DELETE'")
-                else:
-                    print('Updating without geom')
-                    conn.execute(f"insert into {dataset} ({field_list}) select {field_list} from updates.data_updates where __change__ != 'DELETE'")
-                psy_con.commit()
-            except Exception as e:
-                log_write('Updates not successful')
-                log_write(e)
-                psy_con.rollback()
-            finally:
-                conn.execute('drop table updates.data_updates;')
-                psy_con.commit()
 
-services = r"G:\GIS DataBase\Updates\update_datasets.csv"
+    # Write data into postgres database
 
-services_df = pd.read_csv(services)
-# services_df
+    #* Add/populate geometry column
 
-api_key = 'Put your key in here'
+    # Update main dataset
 
-psy_con = pg.connect(database='postgres', user='postgres', password='votum123', host='localhost', port=5432)
-postgis.register(psy_con)
 
-pg_con = 'postgresql+psycopg2://postgres:votum123@localhost:5432/postgres'
-engine = create_engine(pg_con)
 
-for row in services_df.iterrows():
-    layer_id = row[1]['item_no']
-    layer_type = row[1]['Data_type']
-    status_code, updates = get_updates(layer_id, layer_type, api_key)
-    if status_code == 200:
-        main(updates, row[1]['Table_Names'], row[1]['id_value'])
 
+# Processing
+query_statement = 'select * from public.datasets;'
+
+mtdt_conn = 'postgresql+psycopg2://postgres:votum123@thoth:5432/metadata'
+
+mtdt_pg = pg.connect(
+    database='metadata'
+    ,user = 'postgres'
+    ,password = 'votum123'
+    ,host='thoth'
+    ,port=5432
+    ,
+)
+
+mtdt_engine = create_engine(mtdt_conn)
+
+datasets = pd.read_sql(
+    query_statement, 
+    mtdt_engine
+)
+
+print(datasets.head())
+
+## TESTING RUN
+for ind, dataset in datasets.iterrows():
+    break
+
+dataset = datasetUpdate(dataset)
+print(len(dataset.data['features']))
+print(dataset.data)
