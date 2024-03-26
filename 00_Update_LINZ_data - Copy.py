@@ -15,7 +15,6 @@ import codecs
 from datetime import datetime as dt
 from pyproj import Transformer
 import requests
-import json
 
 # Classes
 
@@ -25,8 +24,8 @@ class datasetUpdate:
             dbname = 'metadata'
             ,user = 'postgres'
             ,password = 'votum123'
-            ,host = 'thoth'
-            ,port = 5433
+            ,host = 'localhost'
+            ,port = 5432
         )
 
     def create_transformer(self):
@@ -40,25 +39,20 @@ class datasetUpdate:
         self.create_transformer()
 
         self.dataset = dataset
-        self.dataset_id = self.dataset.dataset_id.values[0]
-        self.item_no = self.dataset.item_no.values[0]
-        self.src_name = self.dataset.source_name.values[0]
-        self.src_id = self.dataset.source_id.values[0]
-        self.db_name = self.dataset.db_name.values[0]
-        self.dataset_type = self.dataset.relation_type.values[0]
+        self.dataset_id = self.dataset.dataset_id
+        self.item_no = self.dataset.item_no
+        self.src_name = self.dataset.source_name
+        self.src_id = self.dataset.source_id
+        self.db_name = self.dataset.db_name
+        self.dataset_type = self.dataset.relation_type
         self.geometry = None
         self.to_date = dt.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         self.from_date = '2000-01-01T00:00:00.000Z'
-        self.update_data = {}
 
         self.get_last_update()
         self.get_api()
 
         self.download_updates()
-        # self.process_update()
-
-        # self.data = self.update_data
-        # del self.update_data
 
     def get_api(self):
         '''
@@ -78,9 +72,7 @@ class datasetUpdate:
         with self.mtdt_pg.cursor() as conn:
             conn.execute(update_query)
             if conn.rowcount == 1:
-                conn_val = conn.fetchone()[0]
-                if conn_val is not None:
-                    self.from_date == conn_val.strftime('%Y-%m-%dT%H:%M:%S.%fZ')                
+                self.from_date == conn.fetchone()[0].strftime('%Y-%m-%dT%H:%M:%S.%fZ')                
 
     # Download updates from source
     def download_updates(self):
@@ -105,8 +97,7 @@ class datasetUpdate:
             ,'&outputFormat=json'
             ])
         self.re = requests.get(url)
-        re_text = self.re.text
-        self.data = json.loads(re_text)
+        self.data = self.re.text
 
 
     # Process wfs into useable dataset
@@ -134,34 +125,6 @@ class datasetUpdate:
         return self.geometry, f'{self.geometry} (({vertex_string}))'
 
     ## Possibly use a geopandas gdf to eliminate need to run * lines
-    def process_update(self):
-        for i, child in enumerate(self.data):
-            for subset in child:
-                self.update_data[i] = {subchild:subset[subchild] for subchild in subset}
-                self.columns = [subchild.tag[26:] for subchild in subset]
-                if 'shape' in self.columns:
-                    self.geometry, self.update_data[i]['shape'] = self.get_shape(subset)
-        
-        if len(self.update_data) > 0:
-            try:
-                df = gpd.GeoDataFrame.from_dict(self.update_data, orient='index')
-                for column in list(df.columns):
-                    df[column] = df.apply(lambda row: self.check_numeric(row[column]))
-            except Exception as e:
-                print(e)
-    
-    def check_numeric(self, val):
-        if pd.isnull(val) or type(val) is int:
-            return val
-        elif re.match(r'^\d*-\d\d-\d\d', val):
-            if re.match(r'^\d*-\d\d-\d\dZ', val):
-                val = val[:-1] + 'T00:00:00.000000Z'
-            return pd.to_datetime(val, yearfirst=True, infer_datetime_format=True)
-        test_val = val.replace('.', '').replace('-','')
-        if test_val.isnumeric():
-            return int(float(val)) if float(val) % 1 == 0 else float(val)
-        else:
-            return val
 
     #* Reproject data into NZTM from NZGD2000
     def reproject_coord(self, posList):
@@ -198,7 +161,7 @@ mtdt_pg = pg.connect(
     ,user = 'postgres'
     ,password = 'votum123'
     ,host='thoth'
-    ,port=5433
+    ,port=5432
     ,
 )
 
@@ -209,21 +172,12 @@ datasets = pd.read_sql(
     mtdt_engine
 )
 
-# print(datasets.head())
+print(datasets.head())
 
 ## TESTING RUN
-# for ind, dataset in datasets.iterrows():
-    # break
-dataset = datasets.query('dataset_id == 16')
+for ind, dataset in datasets.iterrows():
+    break
 
 dataset = datasetUpdate(dataset)
-print(len(dict(dataset.data)['features']))
-
-feature_count = 0
-for val in dataset.data['features']:
-    print(val)
-    print('>>', val['geometry'])
-    if feature_count > 9:
-        break
-    else:
-        feature_count += 1
+print(len(dataset.data['features']))
+print(dataset.data)

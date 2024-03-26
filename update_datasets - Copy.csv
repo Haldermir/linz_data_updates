@@ -1,0 +1,41 @@
+Source_File,Path,Name,item_no,Data_type,Table_Names,id_value
+aims-address-class.txt, https://data.linz.govt.nz/table/53325-aims-address-class/,53325-aims-address-class,53325,table,aims.address_class,address_class_id
+aims-address-component.txt, https://data.linz.govt.nz/table/53354-aims-address-component/,53354-aims-address-component,53354,table,aims.address_component,address_component_id
+aims-address-component-type.txt, https://data.linz.govt.nz/table/53327-aims-address-component-type/,53327-aims-address-component-type,53327,table,aims.address_component_type,address_component_type_id
+aims-address-lifecycle-stage.txt, https://data.linz.govt.nz/table/53329-aims-address-lifecycle-stage/,53329-aims-address-lifecycle-stage,53329,table,aims.address_lifecycle_stage,address_lifecycle_id
+aims-address-position.txt, https://data.linz.govt.nz/layer/53355-aims-address-position/,53355-aims-address-position,53355,layer,aims.address_position,address_position_id
+aims-address-position-type.txt, https://data.linz.govt.nz/table/53330-aims-address-position-type/,53330-aims-address-position-type,53330,table,aims.address_position_type,address_position_type_id
+aims-address-reference.txt, https://data.linz.govt.nz/table/53331-aims-address-reference/,53331-aims-address-reference,53331,table,aims.address_reference,address_reference_id
+aims-address-reference-object-type.txt, https://data.linz.govt.nz/table/53332-aims-address-reference-object-type/,53332-aims-address-reference-object-type,53332,table,aims.address_reference_object_type,address_reference_type_id
+aims-addressable-object-external.txt, https://data.linz.govt.nz/table/53334-aims-addressable-object-external/,53334-aims-addressable-object-external,53334,table,aims.addressable_object_external,addressable_object_external_id
+aims-addressable-object-lifecycle-stage.txt, https://data.linz.govt.nz/table/53335-aims-addressable-object-lifecycle-stage/,53335-aims-addressable-object-lifecycle-stage,53335,table,aims.addressable_object_lifecycle_stage,addressable_object_lifecycle_id
+aims-addressable-object-type.txt, https://data.linz.govt.nz/table/53350-aims-addressable-object-type/,53350-aims-addressable-object-type,53350,table,aims.addressable_object_type,addressable_object_type_id
+aims-alternative-address-type.txt, https://data.linz.govt.nz/table/53337-aims-alternative-address-type/,53337-aims-alternative-address-type,53337,table,aims.alternative_address_type,alternative_address_type_id
+aims-organisation.txt, https://data.linz.govt.nz/table/53338-aims-organisation/,53338-aims-organisation,53338,table,aims.organisation,organisation_id
+fire-and-emergency-nz-localities.txt,https://data.linz.govt.nz/layer/104830-fire-and-emergency-nz-localities/,104830-fire-and-emergency-nz-localities,104830,layer,linz.fire_and_emergency_localities,id
+nz-property-titles-including-owners.txt, https://data.linz.govt.nz/layer/50805-nz-property-titles-including-owners/,50805-nz-property-titles-including-owners,50805,layer,linz.titles_with_owners,id
+nz-parcel-statutory-actions-list.txt, https://data.linz.govt.nz/table/51565-nz-parcel-statutory-actions-list/,51565-nz-parcel-statutory-actions-list,51565,table,linz.parcel_statutory_actions,id
+nz-title-parcel-association-list.txt, https://data.linz.govt.nz/table/51569-nz-title-parcel-association-list/,51569-nz-title-parcel-association-list,51569,table,linz.title_parcel_association,id
+nz-localities-city-alias.txt, https://data.linz.govt.nz/table/104831-nz-localities-city-alias/,104831-nz-localities-city-alias,104831,table,linz.localities_city_alias,city_id
+nz-localities-locality-alias.txt, https://data.linz.govt.nz/table/104832-nz-localities-locality-alias/,104832-nz-localities-locality-alias,104832,table,linz.localities_locality_alias,locality_id
+nz-localities-major-locality-alias.txt, https://data.linz.govt.nz/table/104833-nz-localities-major-locality-alias/,104833-nz-localities-major-locality-alias,104833,table,linz.localities_major_locality_alias,majorlocality_id
+nz-localities-nzgb-compliant-names.txt,https://data.linz.govt.nz/table/105353-nz-localities-nzgb-compliant-names/,105353-nz-localities-nzgb-compliant-names,105353,table,linz.localities_nzgb_compliant_names,locality_id
+nz-parcels.txt, https://data.linz.govt.nz/layer/51571-nz-parcels/,51571-nz-parcels,51571,layer,linz.parcels,id
+nz-roads-address-range-road-type.txt, https://data.linz.govt.nz/table/53368-nz-roads-address-range-road-type/,53368-nz-roads-address-range-road-type,53368,table,nz_roads.address_range_road_type,address_range_road_type_id
+nz-roads-addressing-road-name.txt, https://data.linz.govt.nz/table/53369-nz-roads-addressing-road-name/,53369-nz-roads-addressing-road-name,53369,table,nz_roads.addressing_road_name,road_name_id
+nz-roads-capture-method.txt, https://data.linz.govt.nz/table/53384-nz-roads-capture-method/,53384-nz-roads-capture-method,53384,table,nz_roads.capture_method,capture_method_id
+nz-roads-geometry-class.txt, https://data.linz.govt.nz/table/53385-nz-roads-geometry-class/,53385-nz-roads-geometry-class,53385,table,nz_roads.geometry_class,geometry_class_id
+nz-roads-organisation.txt, https://data.linz.govt.nz/table/53386-nz-roads-organisation/,53386-nz-roads-organisation,53386,table,nz_roads.organisation,organisation_id
+nz-roads-road.txt, https://data.linz.govt.nz/table/53370-nz-roads-road/,53370-nz-roads-road,53370,table,nz_roads.road,road_id
+nz-roads-road-name.txt, https://data.linz.govt.nz/table/53371-nz-roads-road-name/,53371-nz-roads-road-name,53371,table,nz_roads.road_name,road_name_id
+nz-roads-road-name-association.txt, https://data.linz.govt.nz/table/53372-nz-roads-road-name-association/,53372-nz-roads-road-name-association,53372,table,nz_roads.road_name_association,road_name_association_id
+nz-roads-road-name-class.txt, https://data.linz.govt.nz/table/53373-nz-roads-road-name-class/,53373-nz-roads-road-name-class,53373,table,nz_roads.road_name_class,road_name_class_id
+nz-roads-road-name-prefix.txt, https://data.linz.govt.nz/table/53374-nz-roads-road-name-prefix/,53374-nz-roads-road-name-prefix,53374,table,nz_roads.road_name_prefix,road_name_prefix_id
+nz-roads-road-name-suffix.txt, https://data.linz.govt.nz/table/53375-nz-roads-road-name-suffix/,53375-nz-roads-road-name-suffix,53375,table,nz_roads.road_name_suffix,road_name_suffix_id
+nz-roads-road-name-type.txt, https://data.linz.govt.nz/table/53376-nz-roads-road-name-type/,53376-nz-roads-road-name-type,53376,table,nz_roads.road_name_type,road_name_type_id
+nz-roads-road-section.txt, https://data.linz.govt.nz/table/53377-nz-roads-road-section/,53377-nz-roads-road-section,53377,table,nz_roads.road_section,road_section_id
+nz-roads-road-section-geometry.txt, https://data.linz.govt.nz/layer/53378-nz-roads-road-section-geometry/,53378-nz-roads-road-section-geometry,53378,layer,nz_roads.road_section_geometry,road_section_geometry_id
+nz-roads-road-section-lifecycle-stage.txt, https://data.linz.govt.nz/table/53379-nz-roads-road-section-lifecycle-stage/,53379-nz-roads-road-section-lifecycle-stage,53379,table,nz_roads.road_section_lifecycle_stage,road_section_lifecycle_stage_id
+nz-roads-road-section-type.txt, https://data.linz.govt.nz/table/53380-nz-roads-road-section-type/,53380-nz-roads-road-section-type,53380,table,nz_roads.road_section_type,road_section_type_id
+nz-roads-road-type.txt, https://data.linz.govt.nz/table/53381-nz-roads-road-type/,53381-nz-roads-road-type,53381,table,nz_roads.road_type,road_type_id
+nz-roads-route-name.txt, https://data.linz.govt.nz/table/53387-nz-roads-route-name/,53387-nz-roads-route-name,53387,table,nz_roads.route_name,road_name_id
