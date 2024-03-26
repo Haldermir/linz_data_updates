@@ -55,10 +55,10 @@ class datasetUpdate:
         self.get_api()
 
         self.download_updates()
-        # self.process_update()
+        self.process_update()
 
-        # self.data = self.update_data
-        # del self.update_data
+        self.data = self.update_data
+        del self.update_data
 
     def get_api(self):
         '''
@@ -191,15 +191,14 @@ class datasetUpdate:
 # Processing
 query_statement = 'select * from public.datasets;'
 
-mtdt_conn = 'postgresql+psycopg2://postgres:votum123@thoth:5432/metadata'
+mtdt_conn = 'postgresql+psycopg2://postgres:votum123@localhost:5433/metadata'
 
 mtdt_pg = pg.connect(
-    database='metadata'
-    ,user = 'postgres'
-    ,password = 'votum123'
-    ,host='thoth'
-    ,port=5433
-    ,
+    database='metadata',
+    user='postgres',
+    password='votum123',
+    host='localhost',
+    port=5433,
 )
 
 mtdt_engine = create_engine(mtdt_conn)
